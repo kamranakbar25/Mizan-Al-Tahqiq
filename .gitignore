@@ -1,0 +1,98 @@
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Python environments
+.venv/
+venv/
+env/
+ocr-venv/
+qari-venv/
+qari-unsloth-venv/
+
+# Python cache
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Django generated files
+staticfiles/
+media/
+*.sqlite3
+
+# Original books and private data
+data/books/
+data/raw/
+data/private/
+*.pdf
+*.epub
+
+# OCR images and generated outputs
+ihya_page*.png
+qari_page100_input.png
+qari_page100_output.txt
+qari_test/
+qari_benchmark/
+gpu_detection_test/
+qari_crop_test/
+qari_grouping_preview/
+qari_grouping_preview_v2/
+qari_grouping_v3_arabic_test/
+qari_paragraph_test/
+qari_tiled_results/
+qari_tiled_v2_results/
+qari_tiled_v3_results/
+qari_tiled_v4_results/
+
+# Model cache and weights
+unsloth_compiled_cache/
+**/checkpoints/
+**/weights/
+*.safetensors
+*.bin
+
+# Logs and temporary files
+logs/
+upgrade-temp/
+*.log
+*.tmp
+old_ocr_gpu_packages.txt
+
+# IDE and OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Experimental benchmark folders
+arabic_accuracy_benchmark_v*/
+arabic_clahe_padding_benchmark_v*/
+arabic_contrast_benchmark_v*/
+arabic_enhancement_benchmark_v*/
+
+# Experimental OCR outputs
+qari_benchmark/
+qari_test/
+qari_tiled_*/
+qari_grouping_*/
+qari_paragraph_test/
+
+
+# Experimental OCR scripts
+mizan_arabic_accuracy_benchmark_v*.py
+mizan_arabic_clahe_padding_benchmark_v*.py
+mizan_arabic_contrast_benchmark_v*.py
+mizan_arabic_enhancement_benchmark_v*.py
+mizan_detect_lines*.py
+mizan_grouping*.py
+mizan_line_ocr*.py
+mizan_pdf_quality_audit.py
+mizan_qari*.py
+qari_benchmark.py
+qari_test.py
+qari_tiled_ocr*.py
+
+# Local research data
+data/
