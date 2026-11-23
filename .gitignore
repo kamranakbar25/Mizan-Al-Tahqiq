@@ -87,7 +87,7 @@ mizan_arabic_contrast_benchmark_v*.py
 mizan_arabic_enhancement_benchmark_v*.py
 mizan_detect_lines*.py
 mizan_grouping*.py
-mizan_line_ocr*.py
+# mizan_line_ocr*.py
 mizan_pdf_quality_audit.py
 mizan_qari*.py
 qari_benchmark.py
@@ -96,3 +96,9 @@ qari_tiled_ocr*.py
 
 # Local research data
 data/
+
+# Generated research outputs
+research/ocr/results/
+
+# Local migration backups
+ocr-organization-backup/
