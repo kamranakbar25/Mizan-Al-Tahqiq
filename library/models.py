@@ -190,7 +190,7 @@ class ExtractionVersion(models.Model):
     version_number = models.PositiveIntegerField()
     source = models.CharField(max_length=12, choices=SOURCE, default="embedded")
     engine_name = models.CharField(max_length=120, blank=True)
-    engine_version = models.CharField(max_length=80, blank=True)
+    engine_version = models.CharField(max_length=255, blank=True)
     text = models.TextField(blank=True)
     text_sha256 = models.CharField(max_length=64, blank=True)
     quality = models.JSONField(default=dict, blank=True)

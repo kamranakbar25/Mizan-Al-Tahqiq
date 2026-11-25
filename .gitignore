@@ -99,6 +99,8 @@ data/
 
 # Generated research outputs
 research/ocr/results/
+research/embeddings/
+backups/
 
 # Local migration backups
 ocr-organization-backup/
