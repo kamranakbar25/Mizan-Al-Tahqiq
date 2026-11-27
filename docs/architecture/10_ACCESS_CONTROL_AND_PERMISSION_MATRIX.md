@@ -1,5 +1,5 @@
 # 10 — Access Control and Permission Matrix
-**Status: architecture proposal; requires owner approval**
+**Status: owner-approved architecture baseline (D-01 to D-08, 27 November 2026); implementation details remain subject to phase gates**
 
 ## 1. Principles
 - Deny by default; least privilege; explicit grants; no trust based solely on UI hiding.
@@ -66,5 +66,7 @@ Avoid embedding role names as scattered boolean flags. Evaluate permissions with
 ## 6. Session and account notes
 Current source snapshot shows separate admin/researcher session cookie names. Preserve this as a session-boundary control, but do not mistake it for object-level authorization. Session rotation, CSRF, secure cookie flags, timeout, password reset and MFA policy require explicit deployment/security review.
 
-## 7. Decisions still required
-Owner must approve role names, whether senior researcher may approve others' work, whether text reviewers may self-approve, workspace sharing model, MFA requirement, session duration, break-glass policy and retention of audit events.
+## 7. Approved decisions and deferred operational parameters
+The owner approved D-01 through D-08 on 27 November 2026. Accordingly, the private-by-default workspace, deny-by-default scoped permissions, role separation, separation-of-duties preference, rights restrictions, unverified AI output, append-only audit and explicit missingness vocabulary are approved architecture direction.
+
+The following are implementation/deployment parameters, not blockers to the Phase 1 architecture baseline: MFA enforcement method, exact session duration, break-glass expiry duration, audit retention period, and final UI/workflow details. Set these before production exposure and document the values in the relevant implementation/security plan. No role may receive broader rights merely because a UI control is hidden.

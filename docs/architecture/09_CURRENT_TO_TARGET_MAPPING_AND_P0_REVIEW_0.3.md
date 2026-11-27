@@ -1,5 +1,5 @@
 # 09 — Current-to-Target Mapping and P0 Review
-**Version 0.3 | Review draft | 27 November 2026**
+**Version 0.4 | Reconciled after owner approval | 27 November 2026**
 
 ## Evidence boundary
 This mapping is based on the supplied `Mizan-Al-Tahqiq_SAFE_AUDIT_20261127_121650.zip` source snapshot and the Phase 1 review pack. It is not live PostgreSQL introspection and does not prove the deployed runtime matches the snapshot. Treat all target items as design proposals until owner-approved.
@@ -38,12 +38,12 @@ These are target concepts, not a directive to create all tables in Phase 1. Doma
 ## C. P0 contracts — recommended disposition
 | Contract | Recommendation | Approval status |
 |---|---|---|
-| P0-01 Canonical text lifecycle | Approve immutable, version-bound text lifecycle; Page remains compatibility unit | Owner decision required |
-| P0-02 File identity/storage | Approve additive FileAsset; retain Document.file until migration proof | Owner decision required |
-| P0-03 Bibliographic identity | Approve Person + role-bearing contributor records; preserve IDs | Owner decision required |
-| P0-04 Source governance | Approve separate source, acquisition, rights and verification records | Owner decision required |
-| P0-05 Citation locator | Approve scheme-specific locators tied to exact text version where applicable | Owner decision required |
-| P0-06 Document ancestry | Approve Work → Edition → Volume → Document integrity validation | Owner decision required |
+| P0-01 Canonical text lifecycle | Immutable, version-bound text lifecycle; Page remains compatibility unit | APPROVED (owner record 2026-11-27) |
+| P0-02 File identity/storage | Additive FileAsset; retain Document.file until migration proof | APPROVED (owner record 2026-11-27) |
+| P0-03 Bibliographic identity | Person + role-bearing contributor records; preserve IDs | APPROVED (owner record 2026-11-27) |
+| P0-04 Source governance | Separate source, acquisition, rights and verification records | APPROVED (owner record 2026-11-27) |
+| P0-05 Citation locator | Scheme-specific locators tied to exact text version where applicable | APPROVED (owner record 2026-11-27) |
+| P0-06 Document ancestry | Work → Edition → Volume → Document integrity validation | APPROVED (owner record 2026-11-27) |
 
 ## D. Non-destructive migration sequence (future implementation planning only)
 1. Freeze current schema inventory and take verified DB + media backups.
@@ -55,9 +55,10 @@ These are target concepts, not a directive to create all tables in Phase 1. Doma
 7. Switch reads only after acceptance tests pass.
 8. Retain rollback window; remove legacy fields only in a separately approved later phase.
 
-## E. Open blockers
-- Confirm exact live schema/migration state before implementation.
-- Confirm all 12 module definitions against the master roadmap (this package does not alter roadmap scope/order).
-- Approve P0-01 through P0-06.
-- Complete permission/action/scope matrix and source-rights policy approval.
-- Confirm retention, backup RPO/RTO and audit access policy.
+## E. Remaining verification gates (not owner-approval blockers)
+- Reconcile the live PostgreSQL schema and applied migration graph; the uploaded ZIP is only a source snapshot.
+- Execute the 12-module roadmap traceability matrix in `19_MASTER_ROADMAP_TRACEABILITY_0.6.md`.
+- Confirm the merged repository contains this approved document set and that no stale duplicate documents supersede it.
+- Finalize numeric retention, backup RPO/RTO and operational confidence thresholds before the relevant corpus-ingestion/production gates. These are deliberately deferred operational policy values, not unresolved Phase 1 architecture direction.
+
+P0-01 through P0-06 are approved. D-01 through D-12 are approved in the owner record. Do not ask the owner to approve these again.
