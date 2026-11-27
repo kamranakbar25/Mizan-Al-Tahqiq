@@ -1,0 +1,20 @@
+erDiagram
+  AUTHOR }o--o{ BOOK : authors
+  KNOWLEDGECATEGORY }o--o{ BOOK : categories
+  BOOK ||--o{ EDITION : editions
+  PUBLISHER o|--o{ EDITION : publisher
+  EDITION ||--o{ VOLUME : volumes
+  BOOK ||--o{ DOCUMENT : documents
+  EDITION o|--o{ DOCUMENT : edition
+  VOLUME o|--o{ DOCUMENT : volume
+  SOURCERECORD o|--o{ DOCUMENT : provenance
+  SOURCERECORD ||--o{ SOURCEVERIFICATIONEVENT : events
+  DOCUMENT ||--o{ PAGE : pages
+  DOCUMENT ||--o{ INGESTIONRUN : runs
+  DOCUMENT ||--o{ PROCESSINGJOB : jobs
+  PAGE ||--o{ EXTRACTIONVERSION : versions
+  EXTRACTIONVERSION ||--o{ TEXTBLOCK : blocks
+  EXTRACTIONVERSION ||--o{ REVIEWRECORD : reviews
+  USER o|--o{ REVIEWRECORD : reviewer
+  USER o|--o{ SOURCERECORD : verified_by
+  USER o|--o{ SOURCEVERIFICATIONEVENT : actor
