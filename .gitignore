@@ -104,3 +104,5 @@ backups/
 
 # Local migration backups
 ocr-organization-backup/
+# Local project maintenance: backups, patches and audit reports
+_project_admin/

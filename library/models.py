@@ -27,12 +27,20 @@ class Publisher(models.Model):
 class Book(models.Model):
     LANGUAGE = [
         ("ar", "Arabic"), ("ur", "Urdu"), ("en", "English"),
-        ("hi", "Hindi"), ("multi", "Multilingual"), ("und", "Unknown"),
+        ("hi", "Hindi"), ("fa", "Persian"), ("tr", "Turkish"),
+        ("ota", "Ottoman Turkish"), ("bn", "Bengali"),
+        ("id", "Indonesian"), ("ms", "Malay"), ("fr", "French"),
+        ("de", "German"), ("ru", "Russian"),
+        ("multi", "Multilingual"), ("und", "Unknown"),
     ]
     title = models.CharField(max_length=500, db_index=True)
     title_ar = models.CharField(max_length=500, blank=True)
+    original_title = models.CharField(max_length=500, blank=True)
+    transliterated_title = models.CharField(max_length=500, blank=True)
+    alternate_titles = models.JSONField(default=list, blank=True)
     subtitle = models.CharField(max_length=500, blank=True)
     authors = models.ManyToManyField(Author, blank=True, related_name="books")
+    categories = models.ManyToManyField("KnowledgeCategory", blank=True, related_name="books")
     language = models.CharField(max_length=8, choices=LANGUAGE, default="und")
     description = models.TextField(blank=True)
     subject = models.CharField(max_length=120, blank=True, db_index=True)
@@ -48,6 +56,11 @@ class Edition(models.Model):
     publisher = models.ForeignKey(Publisher, on_delete=models.SET_NULL, null=True, blank=True)
     edition_name = models.CharField(max_length=255, blank=True)
     publication_year = models.CharField(max_length=40, blank=True)
+    publication_place = models.CharField(max_length=255, blank=True)
+    editor = models.CharField(max_length=500, blank=True)
+    translator = models.CharField(max_length=500, blank=True)
+    series_title = models.CharField(max_length=255, blank=True)
+    edition_statement = models.CharField(max_length=255, blank=True)
     isbn = models.CharField(max_length=40, blank=True)
     notes = models.TextField(blank=True)
 
@@ -72,8 +85,96 @@ class Volume(models.Model):
         return f"{self.edition.book.title} — Volume {self.volume_number}"
 
 
+class KnowledgeCategory(models.Model):
+    """Hierarchical subject taxonomy for Islamic scholarly works."""
+    name = models.CharField(max_length=160, unique=True)
+    slug = models.SlugField(max_length=180, unique=True)
+    parent = models.ForeignKey("self", on_delete=models.SET_NULL, null=True, blank=True, related_name="children")
+    description = models.TextField(blank=True)
+    is_active = models.BooleanField(default=True)
+    sort_order = models.PositiveSmallIntegerField(default=0)
+
+    class Meta:
+        ordering = ["sort_order", "name"]
+        verbose_name_plural = "knowledge categories"
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+        if self.pk and self.parent_id == self.pk:
+            raise ValidationError({"parent": "A category cannot be its own parent."})
+        ancestor = self.parent
+        seen = set()
+        while ancestor is not None:
+            if ancestor.pk in seen or (self.pk and ancestor.pk == self.pk):
+                raise ValidationError({"parent": "Category hierarchy cannot contain a cycle."})
+            seen.add(ancestor.pk)
+            ancestor = ancestor.parent
+
+    def __str__(self):
+        return self.name
+
+
+class SourceRecord(models.Model):
+    """Provenance, access rights and verification details for a source."""
+    SOURCE_TYPE = [
+        ("publisher", "Publisher"), ("digital_library", "Digital library"),
+        ("dataset", "Dataset"), ("manuscript_collection", "Manuscript collection"),
+        ("institution", "Institution or archive"), ("website", "Website"),
+        ("private_collection", "Private collection"), ("other", "Other"),
+    ]
+    RIGHTS_STATUS = [
+        ("unknown", "Not yet determined"), ("public_domain", "Public domain"),
+        ("open_license", "Open license"), ("permission_required", "Permission required"),
+        ("restricted", "Restricted use"), ("proprietary", "Proprietary"),
+    ]
+    VERIFICATION_STATUS = [
+        ("unverified", "Unverified"), ("verified", "Verified"),
+        ("disputed", "Disputed"), ("rejected", "Rejected"),
+    ]
+    name = models.CharField(max_length=500, db_index=True)
+    source_type = models.CharField(max_length=32, choices=SOURCE_TYPE, default="other")
+    organization = models.CharField(max_length=255, blank=True)
+    source_url = models.URLField(max_length=1000, blank=True)
+    external_identifier = models.CharField(max_length=255, blank=True, db_index=True)
+    license_name = models.CharField(max_length=255, blank=True)
+    license_url = models.URLField(max_length=1000, blank=True)
+    rights_status = models.CharField(max_length=24, choices=RIGHTS_STATUS, default="unknown")
+    required_attribution = models.TextField(blank=True)
+    accessed_at = models.DateField(null=True, blank=True)
+    verification_status = models.CharField(max_length=16, choices=VERIFICATION_STATUS, default="unverified")
+    verification_notes = models.TextField(blank=True)
+    verified_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="verified_source_records")
+    verified_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
+
+
 def upload_path(instance, filename):
     return f"library/documents/{instance.pk}/{filename}"
+
+
+class SourceVerificationEvent(models.Model):
+    """Append-only record of source verification and rights decisions."""
+    source_record = models.ForeignKey(SourceRecord, on_delete=models.PROTECT, related_name="verification_events")
+    actor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
+    previous_status = models.CharField(max_length=16, blank=True)
+    new_status = models.CharField(max_length=16)
+    previous_rights_status = models.CharField(max_length=24, blank=True)
+    new_rights_status = models.CharField(max_length=24)
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at", "-pk"]
+
+    def __str__(self):
+        return f"{self.source_record_id}: {self.new_status} / {self.new_rights_status}"
 
 
 class Document(models.Model):
@@ -92,6 +193,8 @@ class Document(models.Model):
     book = models.ForeignKey(Book, on_delete=models.CASCADE, related_name="documents")
     edition = models.ForeignKey(Edition, on_delete=models.SET_NULL, null=True, blank=True)
     volume = models.ForeignKey(Volume, on_delete=models.SET_NULL, null=True, blank=True)
+    source_record = models.ForeignKey(SourceRecord, on_delete=models.SET_NULL, null=True, blank=True, related_name="documents")
+    source_item_identifier = models.CharField(max_length=255, blank=True)
     file = models.FileField(upload_to=upload_path)
     original_filename = models.CharField(max_length=500)
     sha256 = models.CharField(max_length=64, blank=True, db_index=True)

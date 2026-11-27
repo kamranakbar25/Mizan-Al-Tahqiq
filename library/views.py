@@ -1,24 +1,27 @@
+from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from rest_framework.permissions import IsAuthenticated, IsAdminUser, SAFE_METHODS
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from library.models import (
-    Author, Publisher, Book, Edition, Volume, Document, Page,
-    IngestionRun, ProcessingJob,
+    Author, Publisher, Book, Edition, Volume, KnowledgeCategory, SourceRecord,
+    SourceVerificationEvent, Document, Page, IngestionRun, ProcessingJob,
 )
 from library.serializers import (
     AuthorSerializer, PublisherSerializer, BookSerializer, EditionSerializer,
-    VolumeSerializer, DocumentSerializer, PageSerializer, IngestionRunSerializer,
-    ProcessingJobSerializer,
+    VolumeSerializer, KnowledgeCategorySerializer, SourceRecordSerializer,
+    DocumentSerializer, PageSerializer, IngestionRunSerializer, ProcessingJobSerializer,
+    SourceVerificationEventSerializer,
 )
 from library.services.universal_ingestion import (
     inspect_document, queue_document,
 )
 
 
+@login_required
 def dashboard(request):
     return render(request, "library/dashboard.html", {
         "book_count": Book.objects.count(),
@@ -31,8 +34,19 @@ def dashboard(request):
     })
 
 
+class ResearcherWriteStaffDelete(IsAuthenticated):
+    """Authenticated researchers may work with records; only staff may delete."""
+    def has_permission(self, request, view):
+        allowed = super().has_permission(request, view)
+        if not allowed:
+            return False
+        if getattr(view, "action", None) == "destroy":
+            return bool(request.user and request.user.is_staff)
+        return True
+
+
 class BaseViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [ResearcherWriteStaffDelete]
 
 
 class AuthorViewSet(BaseViewSet):
@@ -49,11 +63,77 @@ class PublisherViewSet(BaseViewSet):
 
 
 class BookViewSet(BaseViewSet):
-    queryset = Book.objects.prefetch_related("authors").all()
+    queryset = Book.objects.prefetch_related("authors", "categories").all()
     serializer_class = BookSerializer
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
-    search_fields = ["title", "title_ar", "subtitle", "subject", "authors__name"]
+    search_fields = [
+        "title", "title_ar", "original_title", "transliterated_title",
+        "subtitle", "subject", "authors__name", "authors__name_ar",
+    ]
     ordering_fields = ["title", "created_at"]
+    ordering = ["title", "pk"]
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        category = self.request.query_params.get("category")
+        language = self.request.query_params.get("language")
+        if category:
+            queryset = queryset.filter(categories__id=category)
+        if language:
+            queryset = queryset.filter(language=language)
+        return queryset.distinct()
+
+
+class KnowledgeCategoryViewSet(BaseViewSet):
+    queryset = KnowledgeCategory.objects.select_related("parent").all()
+    serializer_class = KnowledgeCategorySerializer
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ["name", "slug", "description"]
+    ordering_fields = ["name", "sort_order"]
+    ordering = ["sort_order", "name", "pk"]
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        parent = self.request.query_params.get("parent")
+        if parent == "root":
+            queryset = queryset.filter(parent__isnull=True)
+        elif parent:
+            queryset = queryset.filter(parent_id=parent)
+        active = self.request.query_params.get("active")
+        if active in {"true", "false"}:
+            queryset = queryset.filter(is_active=(active == "true"))
+        return queryset
+
+
+class SourceRecordViewSet(BaseViewSet):
+    queryset = SourceRecord.objects.select_related("verified_by").all()
+    serializer_class = SourceRecordSerializer
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ["name", "organization", "external_identifier", "source_url"]
+    ordering_fields = ["name", "created_at", "accessed_at", "verified_at"]
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        for parameter, field in (
+            ("rights_status", "rights_status"),
+            ("verification_status", "verification_status"),
+            ("source_type", "source_type"),
+        ):
+            value = self.request.query_params.get(parameter)
+            if value:
+                queryset = queryset.filter(**{field: value})
+        return queryset
+
+
+class SourceVerificationEventViewSet(viewsets.ReadOnlyModelViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset = SourceVerificationEvent.objects.select_related("source_record", "actor").all()
+    serializer_class = SourceVerificationEventSerializer
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        source_id = self.request.query_params.get("source_record")
+        return queryset.filter(source_record_id=source_id) if source_id else queryset
 
 
 class EditionViewSet(BaseViewSet):
@@ -67,7 +147,7 @@ class VolumeViewSet(BaseViewSet):
 
 
 class DocumentViewSet(BaseViewSet):
-    queryset = Document.objects.select_related("book", "edition", "volume").all()
+    queryset = Document.objects.select_related("book", "edition", "volume", "source_record").all()
     serializer_class = DocumentSerializer
 
     @action(detail=True, methods=["post"])
@@ -112,7 +192,7 @@ class DocumentViewSet(BaseViewSet):
 
 
 class PageSearchView(APIView):
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
         query = request.query_params.get("q", "").strip()

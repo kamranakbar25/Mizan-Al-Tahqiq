@@ -1,9 +1,11 @@
+from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.views.decorators.http import require_GET
 
 from ai_runtime.services import ollama
 
 
+@login_required
 @require_GET
 def health_check(request):
     """

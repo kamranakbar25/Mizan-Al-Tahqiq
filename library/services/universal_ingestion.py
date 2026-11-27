@@ -317,14 +317,22 @@ def process_document(document: Document, job: ProcessingJob | None = None) -> In
     except Exception as exc:
         run.status = "failed"
         run.error_message = f"{type(exc).__name__}: {exc}"
-        document.status = "failed"
         document.error_message = run.error_message
-        document.save(update_fields=["status", "error_message"])
-        if job:
-            job.status = "failed"
+        if job and job.attempts < 3:
+            job.status = "queued"
             job.error_message = run.error_message
-            job.finished_at = timezone.now()
-            job.save(update_fields=["status", "error_message", "finished_at"])
+            job.started_at = None
+            job.finished_at = None
+            document.status = "queued"
+            job.save(update_fields=["status", "error_message", "started_at", "finished_at"])
+        else:
+            document.status = "failed"
+            if job:
+                job.status = "failed"
+                job.error_message = run.error_message
+                job.finished_at = timezone.now()
+                job.save(update_fields=["status", "error_message", "finished_at"])
+        document.save(update_fields=["status", "error_message"])
     finally:
         run.finished_at = timezone.now()
         run.save()
@@ -342,17 +350,33 @@ def queue_document(document: Document) -> ProcessingJob:
 
 
 def run_next_job() -> ProcessingJob | None:
-    # Conditional update is a lightweight claim operation that prevents two
-    # workers from claiming the same queued job at the same time.
-    candidate = ProcessingJob.objects.filter(status="queued").order_by("created_at").first()
-    if not candidate:
-        return None
-    claimed = ProcessingJob.objects.filter(pk=candidate.pk, status="queued").update(
-        status="running", attempts=candidate.attempts + 1, started_at=timezone.now()
-    )
-    if not claimed:
-        return None
-    candidate.refresh_from_db()
+    """Recover stale claims, then atomically claim and process one queued job."""
+    from datetime import timedelta
+    from django.db import transaction
+    now = timezone.now()
+    stale_before = now - timedelta(minutes=30)
+    # A worker may be terminated while processing. Requeue at most twice;
+    # jobs that exhausted their three attempts become terminal failures.
+    stale = ProcessingJob.objects.filter(status="running", started_at__lt=stale_before)
+    stale.filter(attempts__lt=3).update(status="queued", started_at=None,
+        error_message="Recovered stale worker claim; queued for retry.")
+    exhausted = stale.filter(attempts__gte=3)
+    for job in exhausted.select_related("document"):
+        job.status = "failed"
+        job.finished_at = now
+        job.error_message = "Worker claim became stale after maximum attempts."
+        job.save(update_fields=["status", "finished_at", "error_message"])
+        Document.objects.filter(pk=job.document_id).update(status="failed", error_message=job.error_message)
+
+    with transaction.atomic():
+        candidate = (ProcessingJob.objects.select_for_update(skip_locked=True)
+            .filter(status="queued").order_by("created_at", "pk").first())
+        if candidate is None:
+            return None
+        candidate.status = "running"
+        candidate.attempts += 1
+        candidate.started_at = now
+        candidate.save(update_fields=["status", "attempts", "started_at"])
     process_document(candidate.document, candidate)
     candidate.refresh_from_db()
     return candidate

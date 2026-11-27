@@ -2,8 +2,12 @@ from pathlib import Path
 import environ
 BASE_DIR=Path(__file__).resolve().parent.parent
 env=environ.Env(DEBUG=(bool,False)); environ.Env.read_env(BASE_DIR/".env")
-SECRET_KEY=env("SECRET_KEY",default="unsafe-dev-key-change-me")
-DEBUG=env("DEBUG",default=True); ALLOWED_HOSTS=env.list("ALLOWED_HOSTS",default=["127.0.0.1","localhost"])
+SECRET_KEY = env("SECRET_KEY", default="")
+if not SECRET_KEY or SECRET_KEY == "replace-with-a-long-random-secret":
+    from django.core.exceptions import ImproperlyConfigured
+    raise ImproperlyConfigured("Set a strong SECRET_KEY in .env before starting Mizan.")
+DEBUG = env.bool("DEBUG", default=False)
+ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["127.0.0.1", "localhost"])
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -15,7 +19,7 @@ INSTALLED_APPS = [
     "library",
     "ai_runtime",
 ]
-MIDDLEWARE=["django.middleware.security.SecurityMiddleware","django.contrib.sessions.middleware.SessionMiddleware","django.middleware.common.CommonMiddleware","django.middleware.csrf.CsrfViewMiddleware","django.contrib.auth.middleware.AuthenticationMiddleware","django.contrib.messages.middleware.MessageMiddleware","django.middleware.clickjacking.XFrameOptionsMiddleware"]
+MIDDLEWARE=["django.middleware.security.SecurityMiddleware","config.middleware.SeparatedAdminResearcherSessionMiddleware","django.middleware.common.CommonMiddleware","django.middleware.csrf.CsrfViewMiddleware","django.contrib.auth.middleware.AuthenticationMiddleware","django.contrib.messages.middleware.MessageMiddleware","django.middleware.clickjacking.XFrameOptionsMiddleware"]
 ROOT_URLCONF="config.urls"
 TEMPLATES=[{"BACKEND":"django.template.backends.django.DjangoTemplates","DIRS":[],"APP_DIRS":True,"OPTIONS":{"context_processors":["django.template.context_processors.request","django.contrib.auth.context_processors.auth","django.contrib.messages.context_processors.messages"]}}]
 WSGI_APPLICATION="config.wsgi.application"; ASGI_APPLICATION="config.asgi.application"
@@ -26,7 +30,11 @@ AUTH_PASSWORD_VALIDATORS=[{"NAME":"django.contrib.auth.password_validation.UserA
 LANGUAGE_CODE="en-us"; TIME_ZONE="Asia/Kolkata"; USE_I18N=True; USE_TZ=True
 STATIC_URL="static/"; STATIC_ROOT=BASE_DIR/"staticfiles"; MEDIA_URL="media/"; MEDIA_ROOT=BASE_DIR/env("MEDIA_ROOT",default="media")
 DEFAULT_AUTO_FIELD="django.db.models.BigAutoField"
-REST_FRAMEWORK={"DEFAULT_PERMISSION_CLASSES":["rest_framework.permissions.IsAuthenticatedOrReadOnly"],"DEFAULT_AUTHENTICATION_CLASSES":["rest_framework.authentication.SessionAuthentication","rest_framework.authentication.BasicAuthentication"],"DEFAULT_PAGINATION_CLASS":"rest_framework.pagination.PageNumberPagination","PAGE_SIZE":25}
+LOGIN_URL = "/accounts/login/"
+LOGIN_REDIRECT_URL = "/"
+LOGOUT_REDIRECT_URL = "/accounts/login/"
+
+REST_FRAMEWORK={"DEFAULT_PERMISSION_CLASSES":["rest_framework.permissions.IsAuthenticated"],"DEFAULT_AUTHENTICATION_CLASSES":["rest_framework.authentication.SessionAuthentication","rest_framework.authentication.BasicAuthentication"],"DEFAULT_PAGINATION_CLASS":"rest_framework.pagination.PageNumberPagination","PAGE_SIZE":25}
 
 # Local AI Runtime — Ollama
 OLLAMA_BASE_URL = env(

@@ -1,8 +1,8 @@
 from django.contrib import admin
 
 from library.models import (
-    Author, Publisher, Book, Edition, Volume, Document, Page,
-    IngestionRun, ProcessingJob, ExtractionVersion, TextBlock, ReviewRecord,
+    Author, Publisher, Book, Edition, Volume, KnowledgeCategory, SourceRecord,
+    Document, Page, IngestionRun, ProcessingJob, ExtractionVersion, TextBlock, ReviewRecord,
 )
 
 
@@ -12,11 +12,27 @@ class AuthorAdmin(admin.ModelAdmin):
     list_display = ["name", "birth_year", "death_year"]
 
 
+@admin.register(KnowledgeCategory)
+class KnowledgeCategoryAdmin(admin.ModelAdmin):
+    list_display = ["name", "parent", "is_active", "sort_order"]
+    list_filter = ["is_active"]
+    search_fields = ["name", "slug"]
+    prepopulated_fields = {"slug": ("name",)}
+
+
+@admin.register(SourceRecord)
+class SourceRecordAdmin(admin.ModelAdmin):
+    list_display = ["name", "source_type", "rights_status", "verification_status"]
+    list_filter = ["source_type", "rights_status", "verification_status"]
+    search_fields = ["name", "organization", "external_identifier"]
+    readonly_fields = ["created_at", "updated_at"]
+
+
 @admin.register(Book)
 class BookAdmin(admin.ModelAdmin):
-    search_fields = ["title", "title_ar"]
+    search_fields = ["title", "title_ar", "original_title", "transliterated_title"]
     list_display = ["title", "language", "subject"]
-    filter_horizontal = ["authors"]
+    filter_horizontal = ["authors", "categories"]
 
 
 @admin.register(Publisher)
@@ -38,7 +54,7 @@ class EditionAdmin(admin.ModelAdmin):
 @admin.register(Document)
 class DocumentAdmin(admin.ModelAdmin):
     list_display = [
-        "original_filename", "book", "source_format", "status",
+        "original_filename", "book", "source_record", "source_format", "status",
         "pdf_page_count", "processing_version", "uploaded_at",
     ]
     list_filter = ["status", "source_format"]

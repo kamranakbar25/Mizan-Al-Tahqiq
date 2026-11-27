@@ -109,3 +109,43 @@ class UniversalIngestionTests(TestCase):
         self.assertEqual(run.status, "failed")
         self.assertIn("already exists", run.error_message)
 
+
+
+class ResearcherAuthenticationTests(TestCase):
+    def test_dashboard_redirects_anonymous_researchers_to_login(self):
+        response = self.client.get("/")
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("/accounts/login/", response["Location"])
+
+    def test_researcher_can_sign_in_and_open_dashboard(self):
+        from django.contrib.auth import get_user_model
+
+        get_user_model().objects.create_user(
+            username="researcher", password="Strong-Test-Password-2026!"
+        )
+        login_response = self.client.post(
+            "/accounts/login/",
+            {
+                "username": "researcher",
+                "password": "Strong-Test-Password-2026!",
+            },
+        )
+
+        self.assertEqual(login_response.status_code, 302)
+        self.assertIn(
+            "mizan_researcher_sessionid",
+            login_response.cookies,
+        )
+
+        response = self.client.get("/")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "researcher")
+
+    def test_library_api_rejects_anonymous_access(self):
+        response = self.client.get("/api/books/")
+        self.assertIn(response.status_code, (401, 403))
+
+    def test_ai_runtime_health_requires_researcher_login(self):
+        response = self.client.get("/api/ai-runtime/health/")
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("/accounts/login/", response["Location"])
