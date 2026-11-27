@@ -1,5 +1,5 @@
 # 12 — Metadata Governance and Data Quality
-**Status: architecture contract proposal**
+**Status: architecture contract baseline; governance direction approved 27 November 2026**
 
 ## 1. Required metadata ownership matrix
 | Metadata | Canonical owner | Notes |
@@ -56,5 +56,11 @@ Ingest → validate → quarantine exceptions → curator resolve → publish to
 ## 6. Retention and deletion
 Original scholarly source bytes and audit events should not be hard-deleted by routine UI actions. Define legal takedown, rights revocation, account deletion, derived-index removal, backup expiry and retention exceptions separately. A deletion request must produce an impact plan across source, assets, text versions, passages, vectors, caches, citations and audit evidence before execution.
 
-## 7. Open policy decisions
-Owner approval required for retention periods, backup retention, legal takedown process, metadata change review, confidence thresholds, supported date calendars and language/script vocabularies.
+## 7. Deferred operational policy parameters
+The owner-approved D-05, D-07 and D-08 establish the controlling direction: rights-unknown material is restricted, audit events are append-only, and missingness/dispute/inference states remain distinct. The exact numeric/operational values below are intentionally deferred to the phase that first needs them; they do not reopen the approved architecture:
+- retention durations and backup retention windows: set before production corpus use;
+- legal takedown response workflow and service-level targets: set before external sharing or production;
+- metadata change-review thresholds and OCR confidence thresholds: calibrate against measured Phase 3/4 samples;
+- supported calendar/date vocabularies and language/script vocabularies: versioned controlled vocabularies, extended as corpus coverage is established.
+
+Until a value is approved, use conservative defaults: retain immutable originals and audit history, restrict rights-unknown assets, preserve raw source dates/scripts, and label confidence as uncalibrated rather than inventing a threshold.

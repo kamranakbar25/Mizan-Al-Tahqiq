@@ -28,3 +28,7 @@ Phase 1 is a design phase. Its exit is a complete documented baseline and owner 
 | Hadith citation, matn, isnad and grading verification | 18; 05; 13 | Verification dimensions are separate; model-generated grades and fabricated isnad/citations are prohibited; evidence IDs are server-validated; disagreement and abstention are explicit; automated acceptance tests are specified; rights and OCR provenance gates are included. |
 
 The Hadith Verification Gate is a design requirement. Its automated tests and runtime enforcement belong to the implementation phase(s) assigned by the Master Roadmap; Phase 1 must not implement them.
+
+
+## Roadmap traceability status — Review Pack 0.6
+The exact 12 Phase 1 modules and all 13 source metadata fields from the Master Development Roadmap are mapped in `19_MASTER_ROADMAP_TRACEABILITY_0.6.md`. This closes the documentation traceability gap. Live PostgreSQL/migration evidence and final repository consistency remain open.

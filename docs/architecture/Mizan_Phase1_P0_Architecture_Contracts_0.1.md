@@ -1,8 +1,8 @@
 # Mizan Al-Tahqiq — Phase 1 P0 Architecture Contracts
 
-**Version:** 0.1 — proposed design decisions  
-**Status:** Working proposal; owner approval required before Phase 1 closure  
-**Basis:** Phase 1 Architecture Baseline 1.0, Reconciliation Audit 0.1, and source snapshot `Mizan-Al-Tahqiq_SAFE_AUDIT_20261127_121650.zip`  
+**Version:** 0.1 — proposed design decisions
+**Status:** Owner-approved architecture contracts (27 November 2026); implementation remains separately gated
+**Basis:** Phase 1 Architecture Baseline 1.0, Reconciliation Audit 0.1, and source snapshot `Mizan-Al-Tahqiq_SAFE_AUDIT_20261127_121650.zip`
 **Implementation:** None. No model, migration, database, settings, or runtime changes.
 
 ## Purpose
@@ -164,6 +164,9 @@ Rules:
 - No destructive field/table removal until data migration, parity checks, backup and rollback are approved.
 - Search indexes, embeddings, Qdrant points and AI outputs are derived artifacts; canonical text, source provenance, citations and scholarly assessments remain in PostgreSQL.
 - All scholarly claims require evidence links and explicit attribution; AI-generated text is never treated as source evidence by itself.
+
+## Owner approval record
+P0-01 through P0-06 were approved together on 27 November 2026. See `17_OWNER_APPROVAL_RECORD_2026-11-27.md`. This approval freezes architecture direction only; it does not authorize migrations or code changes.
 
 ## Owner approval checklist
 
