@@ -1,0 +1,158 @@
+erDiagram
+    PERSON ||--o{ WORK_CONTRIBUTOR : contributes
+    WORK ||--o{ WORK_CONTRIBUTOR : has_contributors
+    WORK ||--o{ EDITION : manifests_as
+    PUBLISHER o|--o{ EDITION : publishes
+    EDITION ||--o{ VOLUME : contains
+    WORK ||--o{ DOCUMENT : represented_by
+    EDITION o|--o{ DOCUMENT : edition_copy
+    VOLUME o|--o{ DOCUMENT : volume_copy
+    SOURCE_RECORD ||--o{ SOURCE_VERIFICATION_EVENT : events
+    SOURCE_RECORD o|--o{ DOCUMENT : provenance
+    DOCUMENT ||--o{ CONTENT_UNIT : units
+    CONTENT_UNIT ||--o{ TEXT_VERSION : versions
+    TEXT_VERSION ||--o{ TEXT_BLOCK : blocks
+    TEXT_VERSION ||--o{ REVIEW_DECISION : reviewed
+    TEXT_VERSION ||--o{ PASSAGE : segments
+    PASSAGE ||--o{ CITATION_LOCATOR : locator
+    CITATION ||--o{ CITATION_LOCATOR : has_locations
+    SCHOLARLY_ASSERTION ||--o{ ASSERTION_EVIDENCE : supported_by
+    CITATION ||--o{ ASSERTION_EVIDENCE : evidence
+    RESEARCH_ENTITY ||--o{ ENTITY_ALIAS : aliases
+    RESEARCH_ENTITY ||--o{ ENTITY_IDENTIFIER : identifiers
+    RESEARCH_ENTITY ||--o{ ENTITY_RELATIONSHIP : subject
+    RESEARCH_ENTITY ||--o{ ENTITY_RELATIONSHIP : object
+    RESEARCH_ENTITY ||--o{ SCHOLARLY_ASSERTION : subject
+    PASSAGE ||--o{ EMBEDDING_RECORD : indexed_as
+    TEXT_VERSION ||--o{ EMBEDDING_RECORD : versioned_by
+    USER o|--o{ REVIEW_DECISION : reviewer
+    USER o|--o{ SOURCE_VERIFICATION_EVENT : actor
+
+    PERSON {
+      uuid id PK
+      string canonical_name
+      string name_variants
+      date birth_date
+      date death_date
+      string biography_ref
+    }
+    WORK {
+      uuid id PK
+      string canonical_title
+      string original_title
+      string work_type
+      string primary_language
+    }
+    WORK_CONTRIBUTOR {
+      uuid id PK
+      uuid work_id FK
+      uuid person_id FK
+      string role
+      int sequence
+      string attribution_note
+    }
+    EDITION {
+      uuid id PK
+      uuid work_id FK
+      uuid publisher_id FK
+      string edition_statement
+      string publication_date
+      string publication_place
+      string isbn
+    }
+    VOLUME {
+      uuid id PK
+      uuid edition_id FK
+      int volume_number
+      string title
+    }
+    DOCUMENT {
+      uuid id PK
+      uuid work_id FK
+      uuid edition_id FK
+      uuid volume_id FK
+      uuid source_record_id FK
+      uuid file_asset_id FK
+    }
+    FILE_ASSET {
+      uuid id PK
+      string sha256
+      bigint byte_size
+      string media_type
+      string storage_key
+      string asset_role
+    }
+    CONTENT_UNIT {
+      uuid id PK
+      uuid document_id FK
+      string unit_type
+      int sequence
+      string source_locator
+    }
+    TEXT_VERSION {
+      uuid id PK
+      uuid content_unit_id FK
+      int version_number
+      string representation_type
+      string language
+      string derivation_method
+      string checksum
+    }
+    PASSAGE {
+      uuid id PK
+      uuid text_version_id FK
+      int sequence
+      string start_locator
+      string end_locator
+      string text_checksum
+    }
+    CITATION {
+      uuid id PK
+      uuid document_id FK
+      uuid edition_id FK
+      string citation_style
+    }
+    CITATION_LOCATOR {
+      uuid id PK
+      uuid citation_id FK
+      uuid passage_id FK
+      string printed_page
+      int pdf_page_index
+      string section_locator
+    }
+    RESEARCH_ENTITY {
+      uuid id PK
+      string entity_type
+      string canonical_label
+      string status
+    }
+    ENTITY_RELATIONSHIP {
+      uuid id PK
+      uuid subject_id FK
+      uuid object_id FK
+      string relation_type
+      string provenance_type
+    }
+    SCHOLARLY_ASSERTION {
+      uuid id PK
+      uuid subject_entity_id FK
+      string predicate
+      json object_value
+      string epistemic_status
+      string attribution
+    }
+    ASSERTION_EVIDENCE {
+      uuid id PK
+      uuid assertion_id FK
+      uuid citation_id FK
+      string evidence_role
+    }
+    EMBEDDING_RECORD {
+      uuid id PK
+      uuid passage_id FK
+      uuid text_version_id FK
+      string model_name
+      string model_version
+      string vector_collection
+      string vector_point_id
+    }

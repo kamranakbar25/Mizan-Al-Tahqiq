@@ -1,0 +1,208 @@
+erDiagram
+    AUTHOR }o--o{ BOOK : authors
+    KNOWLEDGECATEGORY }o--o{ BOOK : categories
+    BOOK ||--o{ EDITION : editions
+    PUBLISHER o|--o{ EDITION : publishes
+    EDITION ||--o{ VOLUME : contains
+    BOOK ||--o{ DOCUMENT : book_documents
+    EDITION o|--o{ DOCUMENT : edition_documents
+    VOLUME o|--o{ DOCUMENT : volume_documents
+    SOURCERECORD o|--o{ DOCUMENT : provenance
+    SOURCERECORD ||--o{ SOURCEVERIFICATIONEVENT : verification_history
+    DOCUMENT ||--o{ PAGE : pages
+    DOCUMENT ||--o{ INGESTIONRUN : ingestion_runs
+    DOCUMENT ||--o{ PROCESSINGJOB : processing_jobs
+    PAGE ||--o{ EXTRACTIONVERSION : extraction_versions
+    EXTRACTIONVERSION ||--o{ TEXTBLOCK : blocks
+    EXTRACTIONVERSION ||--o{ REVIEWRECORD : reviews
+    USER o|--o{ SOURCERECORD : verified_by
+    USER o|--o{ SOURCEVERIFICATIONEVENT : actor
+    USER o|--o{ REVIEWRECORD : reviewer
+
+    AUTHOR {
+      bigint id PK
+      varchar name
+      varchar name_ar
+      text biography
+      varchar birth_year
+      varchar death_year
+    }
+    PUBLISHER {
+      bigint id PK
+      varchar name UK
+      varchar location
+    }
+    BOOK {
+      bigint id PK
+      varchar title
+      varchar title_ar
+      varchar original_title
+      varchar transliterated_title
+      json alternate_titles
+      varchar subtitle
+      varchar language
+      text description
+      varchar subject
+      datetime created_at
+      datetime updated_at
+    }
+    EDITION {
+      bigint id PK
+      bigint book_id FK
+      bigint publisher_id FK
+      varchar edition_name
+      varchar publication_year
+      varchar publication_place
+      varchar editor
+      varchar translator
+      varchar series_title
+      varchar edition_statement
+      varchar isbn
+      text notes
+    }
+    VOLUME {
+      bigint id PK
+      bigint edition_id FK
+      int volume_number
+      varchar title
+      varchar printed_page_start
+      varchar printed_page_end
+    }
+    KNOWLEDGECATEGORY {
+      bigint id PK
+      varchar name UK
+      varchar slug UK
+      bigint parent_id FK
+      text description
+      boolean is_active
+      smallint sort_order
+    }
+    SOURCERECORD {
+      bigint id PK
+      varchar name
+      varchar source_type
+      varchar organization
+      varchar source_url
+      varchar external_identifier
+      varchar license_name
+      varchar license_url
+      varchar rights_status
+      text required_attribution
+      date accessed_at
+      varchar verification_status
+      text verification_notes
+      bigint verified_by_id FK
+      datetime verified_at
+      datetime created_at
+      datetime updated_at
+    }
+    SOURCEVERIFICATIONEVENT {
+      bigint id PK
+      bigint source_record_id FK
+      bigint actor_id FK
+      varchar previous_status
+      varchar new_status
+      varchar previous_rights_status
+      varchar new_rights_status
+      text notes
+      datetime created_at
+    }
+    DOCUMENT {
+      uuid id PK
+      bigint book_id FK
+      bigint edition_id FK
+      bigint volume_id FK
+      bigint source_record_id FK
+      varchar source_item_identifier
+      file file
+      varchar original_filename
+      varchar sha256
+      bigint file_size
+      varchar source_format
+      varchar detected_language
+      int pdf_page_count
+      json pdf_metadata
+      int processing_version
+      varchar status
+      text error_message
+      datetime uploaded_at
+      datetime processed_at
+    }
+    PAGE {
+      bigint id PK
+      uuid document_id FK
+      int pdf_page_index
+      int pdf_page_number
+      varchar printed_page_number
+      varchar source_unit_label
+      boolean is_current
+      float width_points
+      float height_points
+      int rotation
+      text extracted_text
+      varchar text_status
+      int word_count
+      text extraction_error
+      datetime created_at
+    }
+    INGESTIONRUN {
+      bigint id PK
+      uuid document_id FK
+      varchar status
+      int total_pages
+      int processed_pages
+      int text_pages
+      int ocr_required_pages
+      int error_pages
+      datetime started_at
+      datetime finished_at
+      json report
+      text error_message
+    }
+    PROCESSINGJOB {
+      bigint id PK
+      uuid document_id FK
+      varchar status
+      smallint attempts
+      int progress_current
+      int progress_total
+      text error_message
+      json result
+      datetime created_at
+      datetime started_at
+      datetime finished_at
+    }
+    EXTRACTIONVERSION {
+      bigint id PK
+      bigint page_id FK
+      int version_number
+      varchar source
+      varchar engine_name
+      varchar engine_version
+      text text
+      varchar text_sha256
+      json quality
+      datetime created_at
+    }
+    TEXTBLOCK {
+      bigint id PK
+      bigint extraction_id FK
+      int order
+      varchar block_type
+      text text
+      varchar language
+      json bounding_box
+    }
+    REVIEWRECORD {
+      bigint id PK
+      bigint extraction_id FK
+      varchar status
+      bigint reviewer_id FK
+      text notes
+      text reviewed_text
+      datetime reviewed_at
+      datetime created_at
+    }
+    USER {
+      bigint id PK
+    }

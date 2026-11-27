@@ -1,0 +1,157 @@
+﻿Model,Field,Django type,Null / constraints / relation,Default,Meaning
+Author,id,BigAutoField,PK,Auto,Internal author record identity.
+Author,name,CharField(255),Required; indexed,—,Primary display name.
+Author,name_ar,CharField(255),Blank allowed,'',Arabic form of the name.
+Author,biography,TextField,Blank allowed,'',Biographical notes.
+Author,birth_year,CharField(40),Blank allowed,'',Birth-year text; string permits approximate/unknown/hijri forms.
+Author,death_year,CharField(40),Blank allowed,'',Death-year text; string permits approximate/unknown/hijri forms.
+Publisher,id,BigAutoField,PK,Auto,Internal publisher identity.
+Publisher,name,CharField(255),Required; unique,—,Publisher name.
+Publisher,location,CharField(255),Blank allowed,'',Publisher location text.
+Book,id,BigAutoField,PK,Auto,Internal work/book record identity.
+Book,title,CharField(500),Required; indexed,—,Primary display title.
+Book,title_ar,CharField(500),Blank allowed,'',Arabic title.
+Book,original_title,CharField(500),Blank allowed,'',Original-language title.
+Book,transliterated_title,CharField(500),Blank allowed,'',Transliterated title.
+Book,alternate_titles,JSONField,Blank allowed,list,Alternate titles; JSON structure is not schema-validated in this model.
+Book,subtitle,CharField(500),Blank allowed,'',Subtitle.
+Book,authors,ManyToManyField(Author),Blank allowed,—,Many-to-many author links; generated join table.
+Book,categories,ManyToManyField(KnowledgeCategory),Blank allowed,—,Many-to-many subject-category links; generated join table.
+Book,language,CharField(8),Choices; required,'und',"Language code; choices include ar, ur, en, hi, fa, tr, ota, bn, id, ms, fr, de, ru, multi, und."
+Book,description,TextField,Blank allowed,'',Book/work description.
+Book,subject,CharField(120),Blank allowed; indexed,'',Free-text subject label.
+Book,created_at,DateTimeField,Auto-created,auto_now_add,Record creation timestamp.
+Book,updated_at,DateTimeField,Auto-updated,auto_now,Last save timestamp.
+Edition,id,BigAutoField,PK,Auto,Edition record identity.
+Edition,book,ForeignKey(Book),Required; CASCADE,—,Parent work; deleting Book cascades to Edition.
+Edition,publisher,ForeignKey(Publisher),Nullable/blank; SET_NULL,NULL,Publisher; deletion preserves Edition and clears publisher link.
+Edition,edition_name,CharField(255),Blank allowed,'',Edition label.
+Edition,publication_year,CharField(40),Blank allowed,'',Publication year text.
+Edition,publication_place,CharField(255),Blank allowed,'',Publication place.
+Edition,editor,CharField(500),Blank allowed,'',Editor as free text in current schema.
+Edition,translator,CharField(500),Blank allowed,'',Translator as free text in current schema.
+Edition,series_title,CharField(255),Blank allowed,'',Series title.
+Edition,edition_statement,CharField(255),Blank allowed,'',Edition statement.
+Edition,isbn,CharField(40),Blank allowed,'',ISBN text; no uniqueness constraint in current model.
+Edition,notes,TextField,Blank allowed,'',Edition notes.
+Volume,id,BigAutoField,PK,Auto,Volume record identity.
+Volume,edition,ForeignKey(Edition),Required; CASCADE,—,Parent edition; deleting Edition cascades to Volume.
+Volume,volume_number,PositiveIntegerField,Required,—,Volume number within edition.
+Volume,title,CharField(255),Blank allowed,'',Volume-specific title.
+Volume,printed_page_start,CharField(40),Blank allowed,'',"Printed pagination start, retained as text."
+Volume,printed_page_end,CharField(40),Blank allowed,'',"Printed pagination end, retained as text."
+KnowledgeCategory,id,BigAutoField,PK,Auto,Category identity.
+KnowledgeCategory,name,CharField(160),Required; unique,—,Category display name.
+KnowledgeCategory,slug,SlugField(180),Required; unique,—,Stable URL-friendly category key.
+KnowledgeCategory,parent,ForeignKey(self),Nullable/blank; SET_NULL,NULL,Parent category; deletion of parent clears child parent link.
+KnowledgeCategory,description,TextField,Blank allowed,'',Category description.
+KnowledgeCategory,is_active,BooleanField,Required,True,Whether category is active.
+KnowledgeCategory,sort_order,PositiveSmallIntegerField,Required,0,Ordering value.
+SourceRecord,id,BigAutoField,PK,Auto,Source provenance record identity.
+SourceRecord,name,CharField(500),Required; indexed,—,Source name.
+SourceRecord,source_type,CharField(32),Choices; required,'other',"publisher, digital_library, dataset, manuscript_collection, institution, website, private_collection, other."
+SourceRecord,organization,CharField(255),Blank allowed,'',Supplying/publishing organization.
+SourceRecord,source_url,URLField(1000),Blank allowed,'',Source URL.
+SourceRecord,external_identifier,CharField(255),Blank allowed; indexed,'',External source identifier.
+SourceRecord,license_name,CharField(255),Blank allowed,'',License name.
+SourceRecord,license_url,URLField(1000),Blank allowed,'',License URL.
+SourceRecord,rights_status,CharField(24),Choices; required,'unknown',"unknown, public_domain, open_license, permission_required, restricted, proprietary."
+SourceRecord,required_attribution,TextField,Blank allowed,'',Required attribution statement.
+SourceRecord,accessed_at,DateField,Nullable/blank,NULL,Date the source was accessed.
+SourceRecord,verification_status,CharField(16),Choices; required,'unverified',"unverified, verified, disputed, rejected."
+SourceRecord,verification_notes,TextField,Blank allowed,'',Current verification notes.
+SourceRecord,verified_by,ForeignKey(AUTH_USER_MODEL),Nullable/blank; SET_NULL,NULL,User who verified; deleting user clears link.
+SourceRecord,verified_at,DateTimeField,Nullable/blank,NULL,Verification timestamp.
+SourceRecord,created_at,DateTimeField,Auto-created,auto_now_add,Record creation timestamp.
+SourceRecord,updated_at,DateTimeField,Auto-updated,auto_now,Last save timestamp.
+SourceVerificationEvent,id,BigAutoField,PK,Auto,Verification event identity.
+SourceVerificationEvent,source_record,ForeignKey(SourceRecord),Required; PROTECT,—,Source being reviewed; source cannot be deleted while event exists.
+SourceVerificationEvent,actor,ForeignKey(AUTH_USER_MODEL),Nullable/blank; SET_NULL,NULL,Actor who recorded decision.
+SourceVerificationEvent,previous_status,CharField(16),Blank allowed,'',Previous verification status.
+SourceVerificationEvent,new_status,CharField(16),Required,—,New verification status.
+SourceVerificationEvent,previous_rights_status,CharField(24),Blank allowed,'',Previous rights status.
+SourceVerificationEvent,new_rights_status,CharField(24),Required,—,New rights status.
+SourceVerificationEvent,notes,TextField,Blank allowed,'',Decision rationale/notes.
+SourceVerificationEvent,created_at,DateTimeField,Auto-created,auto_now_add,Event timestamp.
+Document,id,UUIDField,PK,uuid4,Stable UUID document identity.
+Document,book,ForeignKey(Book),Required; CASCADE,—,Associated work; deleting Book cascades to Document.
+Document,edition,ForeignKey(Edition),Nullable/blank; SET_NULL,NULL,Associated edition; no model-level same-book consistency constraint.
+Document,volume,ForeignKey(Volume),Nullable/blank; SET_NULL,NULL,Associated volume; no model-level edition consistency constraint.
+Document,source_record,ForeignKey(SourceRecord),Nullable/blank; SET_NULL,NULL,Provenance source; deleting source preserves Document.
+Document,source_item_identifier,CharField(255),Blank allowed,'',Identifier of this item within source.
+Document,file,FileField,Required,—,File stored using library/documents/{document-pk}/{filename} upload path.
+Document,original_filename,CharField(500),Required,—,Original uploaded filename.
+Document,sha256,CharField(64),Blank allowed; indexed,'',File SHA-256; indexed but not unique in current model.
+Document,file_size,BigIntegerField,Required,0,File size in bytes.
+Document,source_format,CharField(12),Choices; required,'unknown',"pdf, txt, docx, epub, image, unknown."
+Document,detected_language,CharField(16),Blank allowed,'',Detected language label/code.
+Document,pdf_page_count,PositiveIntegerField,Nullable/blank,NULL,PDF page count.
+Document,pdf_metadata,JSONField,Blank allowed,dict,Extracted PDF metadata.
+Document,processing_version,PositiveIntegerField,Required,0,Document processing version counter.
+Document,status,CharField(20),Choices; required,'uploaded',"uploaded, inspected, queued, processing, completed, partial, failed."
+Document,error_message,TextField,Blank allowed,'',Latest document-level processing error.
+Document,uploaded_at,DateTimeField,Required,timezone.now,Upload timestamp.
+Document,processed_at,DateTimeField,Nullable/blank,NULL,Processing completion timestamp.
+Page,id,BigAutoField,PK,Auto,Page/source-unit row identity.
+Page,document,ForeignKey(Document),Required; CASCADE,—,Parent document.
+Page,pdf_page_index,PositiveIntegerField,Required; unique with document,—,Zero-based PDF page index by convention; exact indexing convention should be confirmed in service/tests.
+Page,pdf_page_number,PositiveIntegerField,Required,—,Stored PDF page number; likely human-facing one-based number.
+Page,printed_page_number,CharField(40),Blank allowed,'',Printed page label; supports non-numeric pagination.
+Page,source_unit_label,CharField(255),Blank allowed,'',Human-readable source unit label.
+Page,is_current,BooleanField,Required; indexed,True,Marks current page row in re-ingestion lifecycle.
+Page,width_points,FloatField,Nullable/blank,NULL,Page width in PDF points.
+Page,height_points,FloatField,Nullable/blank,NULL,Page height in PDF points.
+Page,rotation,IntegerField,Required,0,Page rotation metadata.
+Page,extracted_text,TextField,Blank allowed,'',Text projection stored directly on Page; overlaps with ExtractionVersion.text.
+Page,text_status,CharField(24),Choices; required,—,"text_extracted, ocr_required, empty, error."
+Page,word_count,PositiveIntegerField,Required,0,Word count associated with page extraction.
+Page,extraction_error,TextField,Blank allowed,'',Page-level extraction error.
+Page,created_at,DateTimeField,Auto-created,auto_now_add,Page row creation timestamp.
+IngestionRun,id,BigAutoField,PK,Auto,Ingestion run identity.
+IngestionRun,document,ForeignKey(Document),Required; CASCADE,—,Document being ingested.
+IngestionRun,status,CharField(20),Choices; required,'running',"running, completed, partial, failed."
+IngestionRun,total_pages,PositiveIntegerField,Required,0,Total page count expected.
+IngestionRun,processed_pages,PositiveIntegerField,Required,0,Pages processed.
+IngestionRun,text_pages,PositiveIntegerField,Required,0,Pages with extracted text.
+IngestionRun,ocr_required_pages,PositiveIntegerField,Required,0,Pages requiring OCR.
+IngestionRun,error_pages,PositiveIntegerField,Required,0,Pages with errors.
+IngestionRun,started_at,DateTimeField,Auto-created,auto_now_add,Run start time.
+IngestionRun,finished_at,DateTimeField,Nullable/blank,NULL,Run finish time.
+IngestionRun,report,JSONField,Blank allowed,dict,Structured run report.
+IngestionRun,error_message,TextField,Blank allowed,'',Run-level error summary.
+ProcessingJob,id,BigAutoField,PK,Auto,Job identity.
+ProcessingJob,document,ForeignKey(Document),Required; CASCADE,—,Document associated with job.
+ProcessingJob,status,CharField(16),Choices; indexed,'queued',"queued, running, completed, partial, failed."
+ProcessingJob,attempts,PositiveSmallIntegerField,Required,0,Attempt counter.
+ProcessingJob,progress_current,PositiveIntegerField,Required,0,Current progress counter.
+ProcessingJob,progress_total,PositiveIntegerField,Required,0,Expected progress total.
+ProcessingJob,error_message,TextField,Blank allowed,'',Latest error summary.
+ProcessingJob,result,JSONField,Blank allowed,dict,Structured result payload.
+ProcessingJob,created_at,DateTimeField,Auto-created,auto_now_add,Job creation time.
+ProcessingJob,started_at,DateTimeField,Nullable/blank,NULL,Latest/current attempt start time.
+ProcessingJob,finished_at,DateTimeField,Nullable/blank,NULL,Job finish time.
+ExtractionVersion,id,BigAutoField,PK,Auto,Extraction version identity.
+ExtractionVersion,page,ForeignKey(Page),Required; CASCADE,—,Page whose text was extracted.
+ExtractionVersion,version_number,PositiveIntegerField,Required; unique with page,—,Version sequence within page.
+ExtractionVersion,source,CharField(12),Choices; required,'embedded',"embedded, ocr, manual."
+ExtractionVersion,engine_name,CharField(120),Blank allowed,'',Extraction engine name.
+ExtractionVersion,engine_version,CharField(255),Blank allowed,'',Engine/model version descriptor.
+ExtractionVersion,text,TextField,Blank allowed,'',Versioned extracted text.
+ExtractionVersion,text_sha256,CharField(64),Blank allowed,'',Checksum of stored text; not unique.
+ExtractionVersion,quality,JSONField,Blank allowed,dict,Quality metrics/metadata.
+ExtractionVersion,created_at,DateTimeField,Auto-created,auto_now_add,Version creation timestamp.
+TextBlock,id,BigAutoField,PK,Auto,Text block identity.
+TextBlock,extraction,ForeignKey(ExtractionVersion),Required; CASCADE,—,Parent extraction version.
+TextBlock,order,PositiveIntegerField,Required; unique with extraction,—,Block order within extraction.
+TextBlock,block_type,CharField(16),Choices; required,'paragraph',"paragraph, heading, footnote, table, other."
+TextBlock,text,TextField,Required,—,Block text.
+TextBlock,language,CharField(16),Blank allowed,'',Language code/label.
+TextBlock,bounding_box,JSONField,Blank allowed,dict,Geometric coordinates/metadata; schema is not enforced in model.
+ReviewRecord,id,BigAutoField,PK,Auto,Review record identity.
+ReviewRecord,extraction,ForeignKey(ExtractionVersion),Required; CASCADE,—,Reviewed extraction version.
+ReviewRecord,status,CharField(12),Choices; required,'pending',"pending, approved, corrected, rejected."
+ReviewRecord,reviewer,ForeignKey(AUTH_USER_MODEL),Nullable/blank; SET_NULL,NULL,Reviewer; deleting user clears link.
+ReviewRecord,notes,TextField,Blank allowed,'',Review notes.
+ReviewRecord,reviewed_text,TextField,Blank allowed,'',Corrected/reviewed text embedded in review record.
+ReviewRecord,reviewed_at,DateTimeField,Nullable/blank,NULL,Review timestamp.
+ReviewRecord,created_at,DateTimeField,Auto-created,auto_now_add,Review record creation timestamp.

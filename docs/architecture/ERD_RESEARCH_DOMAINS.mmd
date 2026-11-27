@@ -1,0 +1,26 @@
+erDiagram
+  SURAH ||--o{ AYAH : contains
+  AYAH ||--o{ QURAN_TEXT_VERSION : witnesses
+  QIRAAT ||--o{ QURAN_TEXT_WITNESS : reading
+  AYAH ||--o{ ASBAB_REPORT : context
+  AYAH ||--o{ TAFSIR_PASSAGE_LINK : tafsir
+  HADITH_COLLECTION ||--o{ HADITH_RECORD : contains
+  HADITH_RECORD ||--o{ MATN_VARIANT : variants
+  HADITH_RECORD ||--o{ ISNAD_ROUTE : routes
+  ISNAD_ROUTE ||--|{ ISNAD_LINK : ordered_chain
+  PERSON ||--o{ ISNAD_LINK : narrator
+  PERSON ||--o{ NARRATOR_ASSESSMENT : assessed
+  HADITH_RECORD ||--o{ HADITH_GRADE_ASSESSMENT : grading
+  MADHHAB ||--o{ FIQH_OPINION : positions
+  FIQH_QUESTION ||--o{ FIQH_OPINION : answers
+  FIQH_OPINION ||--o{ FIQH_RULING : rulings
+  DOCTRINE_TOPIC ||--o{ DOCTRINE_POSITION : positions
+  TARIQA ||--o{ LINEAGE : lineage
+  LINEAGE ||--|{ LINEAGE_LINK : ordered
+  HISTORY_EVENT ||--o{ EVENT_PARTICIPANT : participants
+  HISTORY_EVENT ||--o{ EVENT_DATE_ASSESSMENT : dates
+  LEXICAL_ENTRY ||--o{ LEXICAL_FORM : forms
+  ARABIC_ROOT ||--o{ LEXICAL_ENTRY : roots
+  MANUSCRIPT_WITNESS ||--o{ MANUSCRIPT_FOLIO : folios
+  MANUSCRIPT_FOLIO ||--o{ MANUSCRIPT_READING : readings
+  COLLATION ||--o{ MANUSCRIPT_VARIANT : variants
